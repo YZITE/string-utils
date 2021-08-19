@@ -111,7 +111,7 @@ mod tests {
     /// License: MIT
     fn split(x: &str) -> Result<Vec<String>, super::SyntaxError> {
         super::ShellwordSplitter::new(x)
-            .map(|i| i.map(std::borrow::Cow::into_owned))
+            .map(|i| i.map(super::Cow::into_owned))
             .collect()
     }
 
