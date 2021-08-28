@@ -3,6 +3,9 @@
 extern crate alloc;
 pub use alloc::borrow::Cow;
 
+mod advanpeekiter;
+pub use advanpeekiter::{AdvanPeekIter, TakeWhile as APITakeWhile};
+
 mod shard;
 pub use shard::Shard;
 
