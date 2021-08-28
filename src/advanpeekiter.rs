@@ -27,7 +27,11 @@ where
 
     /// like `take_while`, but doesn't consume the first non-matching line by utilizing Peekable
     #[inline]
-    pub fn intell_take_while<P>(&mut self, predicate: P) -> TakeWhile<'_, I, P> {
+    pub fn intell_take_while<P>(&mut self, predicate: P) -> TakeWhile<'_, I, P>
+    where
+        // aide type inference
+        P: FnMut(&I::Item) -> bool,
+    {
         TakeWhile {
             iter: self,
             flag: false,
@@ -99,11 +103,8 @@ mod tests {
 
     #[test]
     fn basic() {
-        fn smaller_than_5(i: &u8) -> bool {
-            *i < 5
-        }
         let mut it0 = AdvanPeekIter::new((0..10).into_iter());
-        let a = it0.intell_take_while(smaller_than_5).count();
+        let a = it0.intell_take_while(|&i| i < 5).count();
         let b = it0.count();
         assert_eq!(a, 5);
         assert_eq!(b, 5);
