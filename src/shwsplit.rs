@@ -41,7 +41,10 @@ impl<'a> Iterator for ShellwordSplitter<'a> {
                 // escape works the same, no matter if inside or outside of quotes
                 let x = match it.next() {
                     Some(i) => i.1,
-                    None => return Some(Err(SyntaxError)),
+                    None => {
+                        self.input = "";
+                        return Some(Err(SyntaxError));
+                    },
                 };
                 ret.push_owned(match x {
                     'n' => '\n',
@@ -94,10 +97,10 @@ impl<'a> Iterator for ShellwordSplitter<'a> {
             }
             ret.push(cx);
         }
+        self.input = "";
         if quotec.is_some() {
             return Some(Err(SyntaxError));
         }
-        self.input = "";
         ret.finish_cvg().map(Ok)
     }
 }
@@ -105,6 +108,7 @@ impl<'a> Iterator for ShellwordSplitter<'a> {
 #[cfg(test)]
 mod tests {
     use alloc::{string::String, vec::Vec};
+    use proptest::prelude::*;
 
     /// split_shellwords tests were taken from
     /// https://docs.rs/shellwords/1.1.0/src/shellwords/lib.rs.html
@@ -163,5 +167,12 @@ mod tests {
     #[test]
     fn trailing_whitespace() {
         assert_eq!(split("a b c d ").unwrap(), ["a", "b", "c", "d"]);
+    }
+
+    proptest! {
+        #[test]
+        fn doesnt_crash(s in "\\PC*") {
+            let _: Vec<_> = super::ShellwordSplitter::new(&s).collect();
+        }
     }
 }

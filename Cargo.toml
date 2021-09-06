@@ -8,3 +8,6 @@ repository = "https://github.com/YZITE/string-utils"
 categories = ["no-std", "parsing"]
 
 [dependencies]
+
+[dev-dependencies]
+proptest = "1.0"
