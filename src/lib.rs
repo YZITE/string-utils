@@ -26,10 +26,69 @@ pub fn slice_between<'a>(whole_buffer_start: &'a [u8], post_part: &'a [u8]) -> &
     &whole_buffer_start[..get_offset_of(whole_buffer_start, post_part)]
 }
 
-/// Splits a slice at the first point after which `f` returns false.
-/// Usually used to segment input according to character categories.
-///
-/// e.g. 1. part while `f(x) == true`, then 2. part
-pub fn split_at_while(x: &[u8], f: impl FnMut(&u8) -> bool) -> (&[u8], &[u8]) {
-    x.split_at(x.iter().copied().take_while(f).count())
+/// Counts the number of bytes that got accepted by `f`.
+pub fn count_str_bytes<F>(inp: &str, mut f: F) -> usize
+where
+    F: FnMut(char) -> bool,
+{
+    inp.chars()
+        .take_while(move |&i| f(i))
+        .map(|i| i.len_utf8())
+        .sum()
+}
+
+pub trait SplitAtWhile {
+    type Item;
+
+    /// Splits a slice at the first point after which `f` returns false.
+    /// Usually used to segment input according to character categories.
+    ///
+    /// e.g. 1. part while `f(x) == true`, then 2. part
+    fn split_at_while<F>(&self, f: F) -> (&Self, &Self)
+    where
+        F: FnMut(&Self::Item) -> bool;
+}
+
+impl<T> SplitAtWhile for [T] {
+    type Item = T;
+
+    fn split_at_while<F>(&self, mut f: F) -> (&Self, &Self)
+    where
+        F: FnMut(&T) -> bool,
+    {
+        self.split_at(self.iter().take_while(move |&i| f(i)).count())
+    }
+}
+
+impl SplitAtWhile for str {
+    type Item = char;
+
+    fn split_at_while<F>(&self, f: F) -> (&Self, &Self)
+    where
+        F: FnMut(&char) -> bool,
+    {
+        self.split_at(self.chars().take_while(f).map(|i| i.len_utf8()).sum())
+    }
+}
+
+pub struct StrLexerBase<'a> {
+    pub inp: &'a str,
+    pub offset: usize,
+}
+
+impl<'a> StrLexerBase<'a> {
+    #[inline]
+    pub fn consume(&mut self, l: usize) -> &'a str {
+        let (a, b) = self.inp.split_at(l);
+        self.inp = b;
+        self.offset += l;
+        a
+    }
+
+    pub fn consume_select<F>(&mut self, f: F) -> &'a str
+    where
+        F: FnMut(char) -> bool,
+    {
+        self.consume(count_str_bytes(self.inp, f))
+    }
 }
