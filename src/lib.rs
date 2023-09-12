@@ -71,6 +71,7 @@ impl SplitAtWhile for str {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct StrLexerBase<'a> {
     pub inp: &'a str,
     pub offset: usize,
