@@ -44,7 +44,7 @@ impl<'a> Iterator for ShellwordSplitter<'a> {
                     None => {
                         self.input = "";
                         return Some(Err(SyntaxError));
-                    },
+                    }
                 };
                 ret.push_owned(match x {
                     'n' => '\n',

@@ -92,4 +92,58 @@ impl<'a> StrLexerBase<'a> {
     {
         self.consume(count_str_bytes(self.inp, f))
     }
+
+    /// # Panics
+    /// This panics if the string does not start with a character in XID
+    #[cfg(feature = "consume-ident")]
+    pub fn consume_ident(&mut self) -> alloc::string::String {
+        use alloc::string::ToString;
+        use unicode_normalization::UnicodeNormalization;
+        let s = self
+            .consume_select(unicode_ident::is_xid_continue)
+            .nfkc()
+            .to_string();
+        assert!(!s.is_empty());
+        s
+    }
+
+    #[cfg(feature = "consume-ident")]
+    pub fn try_consume_ident(&mut self) -> Option<alloc::string::String> {
+        if self.inp.chars().next().map(unicode_ident::is_xid_start) == Some(true) {
+            Some(self.consume_ident())
+        } else {
+            None
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "consume-ident")]
+    fn test_consume_ident() {
+        use alloc::string::ToString;
+        let mut slb = StrLexerBase {
+            inp: "hello ",
+            offset: 0,
+        };
+        assert_eq!(slb.try_consume_ident(), Some("hello".to_string()));
+        assert_eq!(slb.offset, 5);
+
+        let mut slb = StrLexerBase {
+            inp: "ö ",
+            offset: 0,
+        };
+        assert_eq!(slb.try_consume_ident(), Some("ö".to_string()));
+        assert_eq!(slb.offset, 2);
+
+        let mut slb = StrLexerBase {
+            inp: ".ö ",
+            offset: 0,
+        };
+        assert_eq!(slb.try_consume_ident(), None);
+        assert_eq!(slb.offset, 0);
+    }
 }
